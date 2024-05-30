@@ -152,3 +152,83 @@ selection_SSVS <- function (vardep, varexpl, nbiter, nburn, lec, nbSelecInit,nbT
   }
   return(list(sumgamma,nbactu,nbselecactu))
 }
+
+##### Amélioration ssvss
+
+selection_SSVS_2 <- function (vardep, varexpl, nbiter, nburn, lec, nbSelecInit, Pi) {
+  X <- as.matrix(varexpl)
+  y <- as.numeric(as.vector(vardep))
+  y <- y - mean(y)
+  nind <- dim(X)[1]
+  nvar <- dim(X)[2]
+  sumgamma <- rep(0, nvar)
+  nbactu <- 0
+  nbselecactu <- numeric()
+  indgamma10 <- sample(c(1:nvar), nbSelecInit, replace = FALSE)
+  gamma0 <- rep(0, nvar)
+  for (i in 1:nbSelecInit) {
+    gamma0[indgamma10[i]] <- 1
+  }
+  indgamma1 <- indgamma10
+  gamma <- gamma0
+  nbSelec <- nbSelecInit
+  nbToChange <- round(sqrt(nvar))  # Modification : Utilisation d'un nombre adaptatif de variables à changer
+  
+  for (iter in 1:nbiter) {
+    print(iter)
+    gammaprop <- gamma
+    indgamma1prop <- indgamma1
+    indToChange <- sample(c(1:nvar), nbToChange, replace = FALSE)
+    for (i in 1:nbToChange){
+      if (gamma[indToChange[i]]==0){
+        gammaprop[indToChange[i]] <- 1
+        indgamma1prop <- c(indgamma1prop,indToChange[i])
+      } else {
+        gammaprop[indToChange[i]] <- 0
+        indremove <- which(indgamma1prop==indToChange[i])
+        indgamma1prop <- indgamma1prop[-indremove]
+      }
+    }
+    nbSelecprop <- length(indgamma1prop)
+    if (nbSelecprop==0){
+      cond <- 0
+      while(cond==0){
+        gammaprop <- gamma
+        indgamma1prop <- indgamma1
+        indToChange <- sample(c(1:nvar), nbToChange, replace = FALSE)
+        for (i in 1:nbToChange){
+          if (gamma[indToChange[i]]==0){
+            gammaprop[indToChange[i]] <- 1
+            indgamma1prop <- c(indgamma1prop,indToChange[i])
+          } else {
+            gammaprop[indToChange[i]] <- 0
+            indremove <- which(indgamma1prop==indToChange[i])
+            indgamma1prop <- indgamma1prop[-indremove]
+          }
+        }
+        nbSelecprop <- length(indgamma1prop)
+        if (nbSelecprop>0){cond <- 1}
+      }
+    }
+    indgamma1 <- which(gamma == 1)
+    nbSelec <- length(indgamma1)
+    Xgamma <- X[, indgamma1]
+    Xgammaprop <- X[, indgamma1prop]
+    temp <- (t(y)%*%(diag(rep(1,nind))-lec/(1+lec)*Xgammaprop%*%solve(t(Xgammaprop)%*%Xgammaprop)%*%t(Xgammaprop))%*%y)/(t(y)%*%(diag(rep(1,nind))-lec/(1+lec)*Xgamma%*%solve(t(Xgamma)%*%Xgamma)%*%t(Xgamma))%*%y)
+    A <- (1+lec)^((nbSelec-nbSelecprop)/2)*(Pi/(1-Pi))^(nbSelecprop-nbSelec)*temp^(-(nind-1)/2)
+    probaccept1 <- min(1,A)
+    seuil <- runif(1)
+    if (seuil < probaccept1){
+      gamma <- gammaprop
+      indgamma1 <- indgamma1prop
+      nbSelec <- nbSelecprop
+      nbactu <- nbactu+1
+      nbselecactu <- c(nbselecactu,nbSelec)
+    }
+    if (iter > nburn) {
+      sumgamma <- sumgamma + gamma
+    }
+  }
+  return(list(sumgamma,nbactu,nbselecactu))
+}
+

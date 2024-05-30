@@ -1,4 +1,5 @@
 library(glmnet)
+library(stargazer)
 
 # Classez les différentes approches
 # -----------------------------------------------------
