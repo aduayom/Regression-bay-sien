@@ -39,9 +39,24 @@ resSSVS[[2]]  # on voit combien il y a eu d'echanges dans les 1000 derniers run
 resSSVS[[3]]  # on voit le nbre de variables selectionnees lors de ces echanges 
 resSSVS[[1]]
 
-####### S?lection 
+resSSVS_2 <- selection_SSVS_2 (Y, as.matrix(X), 8000, 7000, lec,
+                          nbinit, Pi)
+
+resSSVS_2[[2]]  
+resSSVS_2[[3]]   
+resSSVS_2[[1]]
+
+####### Selection premier modèle
 plot(sort(abs(resSSVS[[1]])))
 boxplot(resSSVS[[1]])
 plot(resSSVS[[1]],xlab="Indice variable",ylab= "Nombre de s?lections post-burn-in", main="SSVS")
 varselectedSSVS <- subsetSelected(resSSVS[[1]],X,0,999)
 varselectedSSVS
+
+
+####### Selection second modèle
+plot(sort(abs(resSSVS_2[[1]])))
+boxplot(resSSVS_2[[1]])
+plot(resSSVS_2[[1]],xlab="Indice variable",ylab= "Nombre de s?lections post-burn-in", main="SSVS")
+varselectedSSVS_2 <- subsetSelected(resSSVS_2[[1]],X,0,999)
+varselectedSSVS_2
